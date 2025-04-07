@@ -27,12 +27,6 @@ then
     CORES=$THREADS
 fi
 
-#make copy of config input file to edit
-
-CONFIGWORKING="config/config_working.yaml"
-cp $CONFIGFILE $CONFIGWORKING
-
-
 # make metadata one off
 
 if [ -z ${SAMPLEID+x}]
@@ -50,6 +44,11 @@ then
     echo "no additional name identifier supplied, using 'qdnaseq'"
     NAME="qdnaseq"
 fi
+
+#make copy of config input file to edit
+
+CONFIGWORKING="config/config_working.yaml"
+cp $CONFIGFILE $CONFIGWORKING
 
 echo "SampleID,AdditionalNames,PhasedBam" > config/metadata_oneoff.csv
 echo "$SAMPLEID,$NAME,$BAMFILE" >> config/metadata_oneoff.csv
