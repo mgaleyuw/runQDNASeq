@@ -1,0 +1,16 @@
+configfile: "config/config.yaml"
+
+notification_email=config["email"]
+
+wildcard_constraints:
+    SAMPLEID=config["sampleidpattern"]
+
+include:    "rules/allRules.smk"
+
+rule all:
+    input:
+        get_targets
+
+onsuccess: shell("""echo "qdnaseq snake has stopped after succesfully creating all targets" | mail -s "qdnaseq complete" {notification_email}""")
+    
+onerror: shell( """echo "qdnaseq snake encountered an error and did not complete" | mail -s "qdnaseq fail" {notification_email}""")
