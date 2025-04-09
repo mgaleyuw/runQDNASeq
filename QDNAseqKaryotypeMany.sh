@@ -16,9 +16,11 @@ help(){
     If your sample identifier does not follow the pattern M\d{4}, specify your pattern using the flag '-w'
     
 
-    Other flags:
-    -c: run with existing config file rather than command line arguments
-    -f: path to a config file if not 'config/config.yaml'
+    All flags:
+    -c: run with existing config file rather than command line arguments, can be combined with '-F' below
+    -F: path to a config file if not 'config/config.yaml'
+    -T: path to a target file (uses config/targets.txt by default)
+    -m: path to a metadata file (uses config/metadata.csv by default)
     -t: number of threads to use for each sample (default 1)
     -s: server (default: mcclintock. accepts franklin, case-sensitive)
     -e: email notification for results (PLEASE CHANGE THIS WHEN RUNNING)
@@ -39,18 +41,18 @@ RUNCONFIG=0
 CONFIGFILE="config/config.yaml"
 FORCE=0
 
-while getopts "t:s:cm:T:e:o:b:C:f:w:a:S:h" option; do
+while getopts "t:s:cm:T:e:o:b:C:F:f:w:a:S:h" option; do
   case $option in
     t) THREADS="$OPTARG" ;;
     s) SERVER="$OPTARG" ;;
     c) RUNCONFIG=1 ;;
-    m) METADATFILE="$OPTARG" ;;
+    m) METADATAFILE="$OPTARG" ;;
     T) TARGETFILE="$OPTARG" ;;
     e) EMAIL="$OPTARG" ;;
     o) OUTPUTDIR="$OPTARG" ;;
     b) BINSIZE="$OPTARG" ;;
     C) CORES="$OPTARG" ;;
-    f) CONFIGFILE="$OPTARG" ;;
+    F) CONFIGFILE="$OPTARG" ;;
     w) WILDCARDPATTERN="$OPTARG" ;;
     f) FORCE=1 ;;
     a) ADDSTRING="$OPTARG" ;;
@@ -97,6 +99,19 @@ then
         snakemake --use-conda --conda-frontend conda --cores $CORES $ADDSTRING
     fi
 else
+    if [ -z ${METADATAFILE+x} ]
+    then
+        echo "no metadata specified, using default (config/metadata.csv)"
+    else
+        sed -i -e "s!metadata: .*!metadata: $METADATAFILE!g" $CONFIGWORKING
+    fi
+
+    if [ -z ${TARGETFILE+x} ]
+    then
+        echo "no targetfile specified, using default (config/targets.txt)"
+    else
+        sed -i -e "s!targetfile: .*!targetfile: $TARGETFILE!g" $CONFIGWORKING
+    fi
     if [ -z ${THREADS+x} ]
     then
         echo "no threads specified, using default ($THREADS)"
@@ -135,8 +150,6 @@ else
     else
         sed -i -e "s/subsampling: .*/subsampling: $SUBSAMPLING/g" $CONFIGWORKING
     fi
-
-
     if [ -z ${WILDCARDPATTERN+x} ]
     then
         echo "no wildcard pattern specified"
