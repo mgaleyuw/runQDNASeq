@@ -12,7 +12,7 @@ Use the two provided wrappers to run QDNAseq efficiently from the command line.
 `QDNAseqKaryotypeOne.sh` should be used when karyotyping only one sample.
 `QDNAseqKaryotypeMany.sh` should be used when karyotyping more than one sample using the same settings. This is a more efficient use of multiprocessing. See the files in `config` for an example of how to set up the metadata and target files.
 
-==When karyotyping an average depth ONT dataset (~30x coverage), subsampling should be used and the default of 10% should work well. If karyotyping a smaller dataset, with < 10x coverage, **turn subsampling off by setting the flag `-S 1.0`**.==
+When karyotyping an average depth ONT dataset (~30x coverage), subsampling should be used and the default of 10% should work well. If karyotyping a smaller dataset, with < 10x coverage, **turn subsampling off by setting the flag `-S 1.0`**.
 
 
 ## Usage
