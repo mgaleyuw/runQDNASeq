@@ -18,9 +18,12 @@ cnv_binsize: 50
   geneAnnotationBed: /n/dat/hg38/resorted.hg38.genes.mergedintervals.bed
 ?else:
   geneAnnotationBed: /data/dat/hg38/resorted.hg38.genes.mergedintervals.bed
-
+# to include all reads set subsampling to 1.0
+subsampling: 1.0
+#
+#
 # resources
-threads: 10
+threads: 50
 #
 # conda environment names
 # these environments are expected to already exist.
@@ -29,4 +32,4 @@ conda_bedtools: bedtools-2.31.1
 conda_qdnaseq: qdnaseq-1.40.0
 #
 # sample identifier pattern 
-sampleidpattern: "HG\\d{3}"
+sampleidpattern: "M\\d{4}"

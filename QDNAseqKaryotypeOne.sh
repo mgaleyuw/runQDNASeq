@@ -4,11 +4,11 @@
 
 help(){
     echo """
-    runQDNASeqOne.sh
+    QDNAseqKaryotypeOne.sh
 
     This is a wrapper to run the qdnaseq for karyotype snakemake for just one sample.
 
-    To run the snake for multiple samples, use runQDNASeqMany.sh instead.
+    To run the snake for multiple samples, use QDNAseqKaryotypeMany.sh instead.
 
     Usage: bash runQDNASeqOne.sh -i SampleIdentifier -B a/path/to/input.bam
 
@@ -21,12 +21,15 @@ help(){
     -s: server (default: mcclintock. accepts franklin, case-sensitive)
     -e: email notification for results (PLEASE CHANGE THIS WHEN RUNNING)
     -o: output directory (default: results)
-    -b: bin size, in kb (default: 50)
+    -b: bin size, in kb (default: 500)
     -C: cores to use for run (default equal to threads)
     -w: wildcard pattern. This must be supplied in single quotes, e.g. 'M\\d{4}' not M\\d{4}
     -i: sample identifier (required)
     -n: name to include in output files
     -B: bam file path (required)
+    -S: subsampling level (default: 0.10). To include all reads, in the case of small datasets, set -S to 1.0
+    -f: run without confirmation. By default this wrapper will ask you to confirm settings before running.
+    -a: any additional arguments to pass to snakemake (in single quotes)
     -h: this helpful help
 
     """
@@ -36,8 +39,9 @@ THREADS=1
 SERVER="mcclintock"
 RUNCONFIG=0
 CONFIGFILE="config/config.yaml"
+FORCE=0
 
-while getopts "t:s:e:o:b:C:w:i:n:B:h" option; do
+while getopts "t:s:e:o:b:C:w:i:n:B:hfa:S:" option; do
   case $option in
     t) THREADS="$OPTARG" ;;
     s) SERVER="$OPTARG" ;;
@@ -49,6 +53,9 @@ while getopts "t:s:e:o:b:C:w:i:n:B:h" option; do
     i) SAMPLEID="$OPTARG" ;;
     n) NAME="$OPTARG" ;;
     B) BAMFILE="$OPTARG" ;;
+    f) FORCE=1 ;;
+    a) ADDSTRING="$OPTARG" ;;
+    S) SUBSAMPLING="$OPTARG" ;;
     h) help
        exit 0 ;;
   esac
@@ -128,6 +135,12 @@ then
 else
     sed -i -e "s/cnv_binsize: .*/cnv_binsize: $BINSIZE/g" $CONFIGWORKING
 fi
+if [ -z ${SUBSAMPLING+x} ]
+then
+    echo "no subsampling specified, using default"
+else
+    sed -i -e "s/subsampling: .*/subsampling: $SUBSAMPLING/g" $CONFIGWORKING
+fi
 
 
 if [ -z ${WILDCARDPATTERN+x} ]
@@ -150,8 +163,23 @@ export CONFIGSTRING='configfile: "'"$CONFIGWORKING"'"'
 perl -p -i -e 's/configfile: .*/$ENV{CONFIGSTRING}/g' workflow/Snakefile
 #sed -i -e "s!configfile: .*!configfile: $CONFIGWORKING!g" workflow/Snakefile
 
-#echo "snakemake --use-conda --cores $CORES"
-#echo -e "\n"
-snakemake --use-conda --conda-frontend conda --cores $CORES -np
-
+if [ $FORCE -eq 0 ]
+then
+    echo "command to run: "
+    echo "snakemake --use-conda --conda-frontend conda --cores $CORES $ADDSTRING"
+    echo -e "\n"
+    read -p "Proceed? (Y/N)"
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]
+    then
+        echo "running"
+        snakemake --use-conda --conda-frontend conda --cores $CORES $ADDSTRING
+    else
+        echo "QDNAseq Karyotype did not run"
+    fi
+    exit 0
+else
+    echo "running without confirmation"
+    snakemake --use-conda --conda-frontend conda --cores $CORES $ADDSTRING
+fi
 
