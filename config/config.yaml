@@ -28,5 +28,5 @@ conda_samtools: samtools-1.19
 conda_bedtools: bedtools-2.31.1
 conda_qdnaseq: qdnaseq-1.40.0
 #
-# sample identifier pattern # this line probably wont work
-sampleidpattern: r"M\d\d\d\d"
+# sample identifier pattern 
+sampleidpattern: "M\\d{4}"

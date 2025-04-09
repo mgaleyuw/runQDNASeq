@@ -20,7 +20,7 @@ cnv_binsize: 50
   geneAnnotationBed: /data/dat/hg38/resorted.hg38.genes.mergedintervals.bed
 
 # resources
-threads: 1
+threads: 10
 #
 # conda environment names
 # these environments are expected to already exist.
@@ -28,5 +28,5 @@ conda_samtools: samtools-1.19
 conda_bedtools: bedtools-2.31.1
 conda_qdnaseq: qdnaseq-1.40.0
 #
-# sample identifier pattern # this line probably wont work
-sampleidpattern: r"HG\d\d\d"
+# sample identifier pattern 
+sampleidpattern: "HG\\d{3}"

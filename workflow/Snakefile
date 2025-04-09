@@ -1,10 +1,10 @@
-configfile: config/config_working.yaml
+configfile: "config/config_working.yaml"
 
 notification_email=config["email"]
 
 wildcard_constraints:
     SAMPLEID=config["sampleidpattern"]
-
+    
 include:    "rules/allRules.smk"
 
 rule all:

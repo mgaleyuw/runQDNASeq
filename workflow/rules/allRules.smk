@@ -7,8 +7,8 @@ OUTPUTDIR=config["output_dir"]
 
 samples = pd.read_csv(config["metadata"]).set_index("SampleID")
 
-SAMPLE_WORKPATH="".join([OUTPUTDIR,"/","{SAMPLEID}-{ADDNAME}.{BIN}"])
-LOG_REGEX="logs/{SAMPLEID}-{ADDNAME}.{BIN}."
+SAMPLE_WORKPATH="".join([OUTPUTDIR,"/","{SAMPLEID}-{ADDNAME}.bins{BIN}"])
+LOG_REGEX="logs/{SAMPLEID}-{ADDNAME}.bins{BIN}."
 
 def get_bam(wildcards):
     bamname=samples.loc[wildcards.SAMPLEID,"PhasedBam"]
@@ -21,7 +21,8 @@ def get_targets(wildcards):
     final_targets=[]
     for target in targets:
         addName=samples.loc[target,"AdditionalNames"]
-        extensions=["called_cnv.pdf", "called_cnv.detail_plot.png", "called_cnv.annotated.vcf"]
+        #extensions=["called_cnv.pdf", "called_cnv.detail_plot.png", "called_cnv.annotated.vcf"]
+        extensions=["subsampled.phased.bam"]
         final_targets+=[f"{OUTPUTDIR}/{target}-{addName}.bins{str(config['cnv_binsize'])}.{x}" for x in extensions]
     return final_targets
 
