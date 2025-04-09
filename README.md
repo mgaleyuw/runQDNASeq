@@ -15,6 +15,8 @@ Use the two provided wrappers to run QDNAseq efficiently from the command line.
 
 ## Usage
 
+Run all scripts within a snakemake environment (`conda activate snakemake-8.16.0`)
+
 ### QDNAseqKaryotypeOne.sh
 
     This is a wrapper to run the qdnaseq for karyotype snakemake for just one sample.
@@ -43,7 +45,7 @@ Use the two provided wrappers to run QDNAseq efficiently from the command line.
     -a: any additional arguments to pass to snakemake (in single quotes)
     -h: this helpful help
 
-#### QDNAseqKaryotypeMany.sh
+### QDNAseqKaryotypeMany.sh
 
     This is a wrapper to run the qdnaseq for karyotype snakemake for more than one sample without directly editing the metadata, targets, or Snakefile.
 
@@ -70,3 +72,4 @@ Use the two provided wrappers to run QDNAseq efficiently from the command line.
     -f: run without confirmation. By default this wrapper will ask you to confirm settings before running.
     -a: any additional arguments to pass to snakemake (in single quotes)
     -h: this helpful help
+
