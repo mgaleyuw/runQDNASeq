@@ -1,4 +1,4 @@
-configfile: "config/config.yaml"
+configfile: config/config_working.yaml
 
 notification_email=config["email"]
 

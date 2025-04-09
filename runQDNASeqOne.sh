@@ -29,17 +29,17 @@ fi
 
 # make metadata one off
 
-if [ -z ${SAMPLEID+x}]
+if [ -z ${SAMPLEID+x} ]
 then
     echo "sample identifier must be supplied, exiting"
     exit 1
 fi
-if [ -z ${BAMFILE+x}]
+if [ -z ${BAMFILE+x} ]
 then
     echo "bam file input must be supplied, exiting"
     exit 1
 fi
-if [ -z ${NAME+x}]
+if [ -z ${NAME+x} ]
 then
     echo "no additional name identifier supplied, using 'qdnaseq'"
     NAME="qdnaseq"
@@ -53,47 +53,68 @@ cp $CONFIGFILE $CONFIGWORKING
 echo "SampleID,AdditionalNames,PhasedBam" > config/metadata_oneoff.csv
 echo "$SAMPLEID,$NAME,$BAMFILE" >> config/metadata_oneoff.csv
 
-echo "$SAMPLEID" > targets.txt
+echo "$SAMPLEID" > config/oneoff_targets.txt
 
-sed -i "s?metadata: .*?metadata: config/metadata_oneoff.csv?g" -e $CONFIGWORKING
+sed -i -e "s!metadata: .*!metadata: config/metadata_oneoff.csv!g" $CONFIGWORKING
+sed -i -e "s!targetfile: .*!targetfile: config/oneoff_targets.txt!g" $CONFIGWORKING
 
 #edit config file
 if [ -z ${THREADS+x} ]
 then
-    sed -i "s/threads: .*/threads: $THREADS/g" -e $CONFIGWORKING
+    echo "no threads specified, using default ($THREADS)"
+    sed -i -e "s/threads: .*/threads: $THREADS/g" $CONFIGWORKING
+else
+    sed -i -e "s/threads: .*/threads: $THREADS/g" $CONFIGWORKING
 fi
 if [ -z ${SERVER+x} ]
 then
-    sed -i "s/server: .*/server: $SERVER/g" -e $CONFIGWORKING
+    echo "no server specified, using default ($SERVER)"
+    sed -i -e "s/server: .*/server: $SERVER/g" $CONFIGWORKING
+else
+    sed -i -e "s/server: .*/server: $SERVER/g" $CONFIGWORKING
 fi
 if [ -z ${EMAIL+x} ]
 then
-    sed -i "s/email: .*/email: $EMAIL/g" -e $CONFIGWORKING
+    echo "no email specified, using default"
+else    
+    sed -i -e "s/email: .*/email: $EMAIL/g" $CONFIGWORKING
 fi
 if [ -z ${OUTPUTDIR+x} ]
 then
-    sed -i "s?output_dir: .*?output_dir: $OUTPUTDIR?g" -e $CONFIGWORKING
+    echo "no output dir specified, using outputin current directory"
+else
+    sed -i -e "s?output_dir: .*?output_dir: $OUTPUTDIR?g" $CONFIGWORKING
 fi
 if [ -z ${BINSIZE+x} ]
 then
-    sed -i "s/cnv_binsize: .*/cnv_binsize: $BINSIZE/g" -e $CONFIGWORKING
+    echo "no binsize specified, using default"
+else
+    sed -i -e "s/cnv_binsize: .*/cnv_binsize: $BINSIZE/g" $CONFIGWORKING
 fi
-
-#edit snakefile
 
 if [ -z ${WILDCARDPATTERN+x} ]
 then
+    echo "no wildcard pattern specified"
+else
     # this line will almost certainly not work
-    sed -i 's?sampleidpattern=.*?sampleidpattern=r\'"$WILDCARDPATTERN"'?g' -e Snakefile
+    echo "wildcard pattern specified: $WILDCARDPATTERN"
+    echo 's!sampleidpattern:.*!sampleidpattern:r\'"$WILDCARDPATTERN"'!g'
+    export WILDCARDSTRING='sampleidpattern: r"'"$WILDCARDPATTERN"'"'
+    #export SIMPLE="$WILDCARDPATTERN"
+    perl -p -i -e 's/sampleidpattern:.*/$ENV{WILDCARDSTRING}/g' "$CONFIGWORKING"
+    #sed -i -e 's!sampleidpattern:.*!sampleidpattern:r\'"$WILDCARDPATTERN"'!g' $CONFIGWORKING
 fi
 
 echo -e "\nrunning with the following config options: \n"
 cat $CONFIGWORKING
-echo ""
+echo -e "\n"
 
-sed -i "s?configfile: .*?configfile: $CONFIGWORKING?g" -e Snakefile
+#edit snakefile
+
+sed -i -e "s!configfile: .*!configfile: $CONFIGWORKING!g" workflow/Snakefile
 
 echo "snakemake --use-conda --cores $CORES"
+echo -e "\n"
 #snakemake --use-conda --cores $CORES
 
 
