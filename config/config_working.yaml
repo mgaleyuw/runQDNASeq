@@ -1,0 +1,35 @@
+__use_yte__: true
+# this config needs to be parsed with YTE
+# input configuration
+server: mcclintock
+#
+metadata: config/metadata_oneoff.csv
+targetfile: config/oneoff_targets.txt
+#
+## status notification email address. Comma separated is OK.
+#
+email: mgaley@uw.edu
+#
+output_dir: results
+#
+# QDNAseq options
+cnv_binsize: 100
+?if this["server"] == "mcclintock":
+  geneAnnotationBed: /n/dat/hg38/resorted.hg38.genes.mergedintervals.bed
+?else:
+  geneAnnotationBed: /data/dat/hg38/resorted.hg38.genes.mergedintervals.bed
+# to include all reads set subsampling to 1.0
+subsampling: 1.0
+#
+#
+# resources
+threads: 30
+#
+# conda environment names
+# these environments are expected to already exist.
+conda_samtools: samtools-1.19
+conda_bedtools: bedtools-2.31.1
+conda_qdnaseq: qdnaseq-1.40.0
+#
+# sample identifier pattern 
+sampleidpattern: "M\\d{4}"

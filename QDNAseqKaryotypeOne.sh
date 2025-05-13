@@ -10,7 +10,7 @@ help(){
 
     To run the snake for multiple samples, use QDNAseqKaryotypeMany.sh instead.
 
-    Usage: bash runQDNASeqOne.sh -i SampleIdentifier -B a/path/to/input.bam
+    Usage: bash QDNAseqKaryotypeOne.sh -i SampleIdentifier -B a/path/to/input.bam
 
     If your sample identifier does not follow the pattern M\d{4}, specify your pattern using the flag '-w'
     By default this script names output files 'SampleID-qdnaseq-bins{binnumber}.{extension}'.

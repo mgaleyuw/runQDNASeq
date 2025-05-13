@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript --vanilla
 
 suppressWarnings(suppressPackageStartupMessages(library(optparse)))
+suppressWarnings(suppressPackageStartupMessages(library(plyr)))
+suppressWarnings(suppressPackageStartupMessages(library(dplyr)))
 
 option_list <- list(make_option(c("-t", "--threads"), action="store", help="Threads to use", default=1),
                     make_option(c("-s", "--seed"), action="store", help="random seed", default=1234),
@@ -69,6 +71,7 @@ plot(copyNumbersCalled)
 dev.off()
 
 # the following replaces exportBins to save output, which is broken in qdnaseq v1.40.0 when only one CNV is found.
+# modified to use dplyr/plyr 2025-05-13
 calls <- Biobase::assayDataElement(copyNumbersCalled, "calls")
 segments <- log2(Biobase::assayDataElement(copyNumbersCalled, "segmented"))
 fd <- Biobase::fData(copyNumbersCalled)
@@ -90,73 +93,31 @@ vcfHeader <- cbind(c(
                          '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'
                          ))
 
-for (i in 1:ncol(calls)) {        
-        d <- cbind(fd[,1:3], calls[,i], segments[,i])
-        sel <- !is.na(d[,4])
+i=1
+ddf <- data.frame(cbind(fd[,1:3], calls[,i], segments[,i]))
+dfsel <- ddf %>% filter( ! is.na(calls[,i]))
+colnames(dfsel) <- c("chromosome", "start", "end", "calls", "segments")
 
-        dsel <- d[sel,]
-        rleD <- rle(paste(dsel[ ,1], dsel[ ,4], sep=":"))
+dfr <- dfsel %>% mutate(record=paste(chromosome,calls, sep=":")) %>% group_by(chromosome, record) %>%
+ summarize(pos=min(start), end=max(end), score=max(calls),
+  segVal=max(round(segments, digits=2)), bins=n()) %>% mutate(svlen=end-pos+1,
+   svtype=ifelse(score <= -1, "DEL", "DUP"), gt=ifelse(score>=-1,"0/1","1/1") ) %>%
+    filter(score !=0) %>% mutate(id=".", ref="<DIP>", alt=paste("<", svtype,">", sep=""), 
+    qual=1000, filter="PASS", info=paste("SVTYPE=", svtype, ";END=", end, ";SVLEN=", svlen, 
+    ";BINS=", bins, ";SCORE=", score, ";LOG2CNT=", segVal, sep=""), format="GT", sample=gt)
 
-        endI <- cumsum(rleD$lengths)
-        posI <- c(1, endI[-length(endI)] + 1)
-        stopifnot(length(posI) == length(endI))
+vcf <- dfr %>% select(chromosome, pos, id, ref, alt, qual, filter, info, format, sample)
+vcf <- data.frame(vcf)
+colnames(vcf) <- c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", pd$name[i])
+write.table(vcfHeader, file=paste(outputname, ".called_cnv.vcf", sep=""), quote=FALSE, sep="\t", col.names=FALSE, row.names=FALSE)
+suppressWarnings(write.table(vcf, file=paste(outputname, ".called_cnv.vcf", sep=""), quote=FALSE, sep="\t", append=TRUE, col.names=TRUE, row.names=FALSE))
 
-        chr <- dsel[posI,1]
-        pos <- dsel[posI,2]
-        end <- dsel[endI,3]
-        score <- dsel[posI,4]
-        segVal <- round(dsel[posI,5], digits=2)
-        nchr <- length(chr)
-        svtype <- rep(NA_character_, times=nchr) 
-        svlen <- rep(NA_real_, times=nchr) 
-        gt <- rep(NA_character_, times=nchr) 
-        bins <- rleD$lengths
-        svtype[dsel[posI,4] <= -1] <- "DEL"
-        svtype[dsel[posI,4] >= 1] <- "DUP"
-        svlen <- end - pos + 1
+dfr <- dfr %>% mutate(samplename=pd$name[i])
+tsv <- dfr %>% select(samplename, chromosome, pos, end, bins, segVal)        
+tsv <- data.frame(tsv)
+colnames(tsv) <- c("SAMPLE_NAME", "CHROMOSOME", "START", "STOP", "DATAPOINTS", "LOG2_RATIO_MEAN")
+write.table(tsv, file=paste(outputname, ".called_cnv.seg", sep=""), quote=FALSE, sep="\t", col.names=TRUE, row.names=FALSE)
 
-        gt[score == -2] <- "1/1"        
-        gt[score == -1] <- "0/1"        
-        gt[score == 1] <- "0/1"        
-        gt[score == 2] <- "0/1"        
-        gt[score == 3] <- "0/1"
-        
-        ## Sanity checks
-        stopifnot(
-          length(pos) == nchr,
-          length(end) == nchr,
-          length(score) == nchr,
-          length(segVal) == nchr,
-          length(bins) == nchr,
-          length(svtype) == nchr,
-          length(svlen) == nchr,
-          length(gt) == nchr
-        )
-
-        id <- "."
-        ref <- "<DIP>"
-        alt <- paste("<", svtype, ">", sep="")
-        qual <- 1000
-        filter <- "PASS"
-        info <- paste("SVTYPE=", svtype, ";END=", end, ";SVLEN=", svlen, ";BINS=", bins, ";SCORE=", score, ";LOG2CNT=", segVal, sep="")
-        format <- "GT"
-        sample <- gt
-        out <- cbind(chr, pos, id, ref, alt, qual, filter, info, format, sample)        
-        colnames(out) <- c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", pd$name[i])
-
-        ## Drop copy-neutral segments
-        out <- data.frame(out)
-        out <- out[which(!is.na(out$sample)),]
-        
-        write.table(vcfHeader, file=paste(outputname, ".called_cnv.vcf", sep=""), quote=FALSE, sep="\t", col.names=FALSE, row.names=FALSE)
-        suppressWarnings(write.table(out, file=paste(outputname, ".called_cnv.vcf", sep=""), quote=FALSE, sep="\t", append=TRUE, col.names=TRUE, row.names=FALSE))
-        
-        out <- cbind(paste(outputname, ".called_cnv.seg", sep=""), chr, pos, end, bins, segVal)
-        colnames(out) <- c("SAMPLE_NAME", "CHROMOSOME", "START", "STOP", "DATAPOINTS", "LOG2_RATIO_MEAN")
-        out <- data.frame(out)
-        out <- out[which(!is.na(out$sample)),]
-        write.table(out, file=paste(outputname, ".called_cnv.seg", sep=""), quote=FALSE, sep="\t", col.names=TRUE, row.names=FALSE)
-}
 
 #exportBins(copyNumbersCalled, format="seg", file=paste(outputname, ".called_cnv.seg", sep=""))
 #exportBins(copyNumbersCalled, format="vcf", file=paste(outputname, ".called_cnv.vcf", sep=""))
