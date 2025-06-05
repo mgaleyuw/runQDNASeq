@@ -31,37 +31,17 @@ bins <- getBinAnnotations(binSize=binSize, genome="hg38")
 readCounts <- binReadCounts(bins, bamfiles=bamfile)
 readCountsFiltered <- applyFilters(readCounts, residual=TRUE, blacklist=TRUE, mappability=60)
 
-#pdf(file=paste(outputname, "isobarplot.pdf", sep=""))
-#par(mar=c(4.1, 4.4, 4.1, 1.0), xaxs="i", yaxs="i")
-#isobarPlot(readCountsFiltered)
-#dev.off()
-
 readCountsFiltered <- estimateCorrection(readCountsFiltered)
 readCountsFiltered <- applyFilters(readCountsFiltered, chromosomes="Y", residual=TRUE, blacklist=TRUE, mappability=60)
-
-#pdf(file=paste(outputname, "noiseplot.pdf", sep=""))
-#par(mar=c(4.1, 4.4, 4.1, 1.0), xaxs="i", yaxs="i")
-#noisePlot(readCountsFiltered)
-#dev.off()
 
 copyNumbers <- correctBins(readCountsFiltered)
 copyNumbersNormalized <- normalizeBins(copyNumbers)
 copyNumbersSmooth <- smoothOutlierBins(copyNumbersNormalized)
 
-#pdf(file=paste(outputname, "copy_numbers.pdf", sep=""))
-#par(mar=c(4.1, 4.4, 4.1, 1.0), xaxs="i", yaxs="i")
-#plot(copyNumbersSmooth)
-#dev.off()
-
 exportBins(copyNumbersSmooth, file=paste(outputname, ".cnv.bins.txt", sep=""))
 
 copyNumbersSegmented <- segmentBins(copyNumbersSmooth, transformFun="sqrt")
 copyNumbersSegmented <- normalizeSegmentedBins(copyNumbersSegmented)
-
-#pdf(file=paste(outputname, "copy_numbers_segmented.pdf", sep=""))
-#par(mar=c(4.1, 4.4, 4.1, 1.0), xaxs="i", yaxs="i")
-#plot(copyNumbersSegmented)
-#dev.off()
 
 copyNumbersCalled <- callBins(copyNumbersSegmented, method="cutoff")
 
