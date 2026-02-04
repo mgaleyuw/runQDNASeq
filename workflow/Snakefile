@@ -1,4 +1,4 @@
-configfile: "/n/scripts/runQDNASeq/config/config.yaml"
+configfile: "config/config.yaml"
 
 notification_email=config["email"]
 
