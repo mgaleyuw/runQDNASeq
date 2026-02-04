@@ -3,14 +3,14 @@ __use_yte__: true
 # input configuration
 server: mcclintock
 #
-metadata: config/metadata_oneoff.csv
-targetfile: config/oneoff_targets.txt
+metadata: /n/scripts/runQDNASeq/config/metadata_oneoff.csv
+targetfile: /n/scripts/runQDNASeq/config/oneoff_targets.txt
 #
 ## status notification email address. Comma separated is OK.
 #
 email: mgaley@uw.edu
 #
-output_dir: results
+output_dir: /n/alignments/LTP005_Clinical_Dev/M3536-NP-RU_R10-LTP005_Clinical_Dev-T3952850_na-5mCG_5hmCG-na/lrsight/cs.qdnaseq
 #
 # QDNAseq options
 cnv_binsize: 100
@@ -19,7 +19,7 @@ cnv_binsize: 100
 ?else:
   geneAnnotationBed: /data/dat/hg38/resorted.hg38.genes.mergedintervals.bed
 # to include all reads set subsampling to 1.0
-subsampling: 1.0
+subsampling: 0.10
 #
 #
 # resources
@@ -30,6 +30,7 @@ threads: 30
 conda_samtools: samtools-1.19
 conda_bedtools: bedtools-2.31.1
 conda_qdnaseq: qdnaseq-1.40.0
+conda_bcftools: bcftools-1.22
 #
 # sample identifier pattern 
 sampleidpattern: "M\\d{4}"

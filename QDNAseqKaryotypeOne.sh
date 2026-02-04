@@ -1,6 +1,11 @@
 #!/bin/bash
 
 # debugging 2024-04-08
+PARENT="$(dirname "$0")"
+GRANDPARENT="${PARENT%/*}"
+
+originaldir=$(pwd)
+cd $PARENT
 
 help(){
     echo """
@@ -38,7 +43,7 @@ help(){
 THREADS=1
 SERVER="mcclintock"
 RUNCONFIG=0
-CONFIGFILE="config/config.yaml"
+CONFIGFILE="$PARENT/config/config.yaml"
 FORCE=0
 
 while getopts "t:s:e:o:b:C:w:i:n:B:hfa:S:" option; do
@@ -84,24 +89,24 @@ then
     NAME="qdnaseq"
 fi
 
-echo "SampleID,AdditionalNames,PhasedBam" > config/metadata_oneoff.csv
-echo "$SAMPLEID,$NAME,$BAMFILE" >> config/metadata_oneoff.csv
+echo "SampleID,AdditionalNames,PhasedBam" > $PARENT/config/metadata_oneoff.csv
+echo "$SAMPLEID,$NAME,$BAMFILE" >> $PARENT/config/metadata_oneoff.csv
 
 #make target file
 
-echo -n "$SAMPLEID" > config/oneoff_targets.txt
+echo -n "$SAMPLEID" > $PARENT/config/oneoff_targets.txt
 
 
 #make copy of config input file to edit
 
-CONFIGWORKING="config/config_working.yaml"
+CONFIGWORKING="$PARENT/config/config_working.yaml"
 cp $CONFIGFILE $CONFIGWORKING
 
 
 #edit config file
 
-sed -i -e "s!metadata: .*!metadata: config/metadata_oneoff.csv!g" $CONFIGWORKING
-sed -i -e "s!targetfile: .*!targetfile: config/oneoff_targets.txt!g" $CONFIGWORKING
+sed -i -e "s!metadata: .*!metadata: $PARENT/config/metadata_oneoff.csv!g" $CONFIGWORKING
+sed -i -e "s!targetfile: .*!targetfile: $PARENT/config/oneoff_targets.txt!g" $CONFIGWORKING
 
 if [ -z ${THREADS+x} ]
 then
@@ -160,26 +165,27 @@ echo -e "\n"
 #edit snakefile
 
 export CONFIGSTRING='configfile: "'"$CONFIGWORKING"'"'
-perl -p -i -e 's/configfile: .*/$ENV{CONFIGSTRING}/g' workflow/Snakefile
+perl -p -i -e 's/configfile: .*/$ENV{CONFIGSTRING}/g' $PARENT/workflow/Snakefile
 #sed -i -e "s!configfile: .*!configfile: $CONFIGWORKING!g" workflow/Snakefile
 
 if [ $FORCE -eq 0 ]
 then
     echo "command to run: "
-    echo "snakemake --use-conda --conda-frontend conda --cores $CORES $ADDSTRING"
+    echo "snakemake --directory $PARENT --use-conda --conda-frontend conda --cores $CORES $ADDSTRING"
     echo -e "\n"
     read -p "Proceed? (Y/N)"
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]
     then
         echo "running"
-        snakemake --use-conda --conda-frontend conda --cores $CORES $ADDSTRING
+        snakemake --directory $PARENT --use-conda --conda-frontend conda --cores $CORES $ADDSTRING
     else
         echo "QDNAseq Karyotype did not run"
     fi
     exit 0
 else
     echo "running without confirmation"
-    snakemake --use-conda --conda-frontend conda --cores $CORES $ADDSTRING
+    snakemake --directory $PARENT --use-conda --conda-frontend conda --cores $CORES $ADDSTRING
 fi
 
+cd $originaldir

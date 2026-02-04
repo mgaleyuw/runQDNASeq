@@ -30,6 +30,7 @@ threads: 40
 conda_samtools: samtools-1.19
 conda_bedtools: bedtools-2.31.1
 conda_qdnaseq: qdnaseq-1.40.0
+conda_bcftools: bcftools-1.22
 #
 # sample identifier pattern 
 sampleidpattern: "M\\d{4}"
